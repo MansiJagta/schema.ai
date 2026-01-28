@@ -79,6 +79,27 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import uuid
+from services.database import engine, get_db
+from models import schema_db
+from sqlalchemy.orm import Session
+from fastapi import Depends
+
+
+schema_db.Base.metadata.create_all(bind=engine)
+
+@app.post("/api/generate-schema")
+async def handle_request(data: RequestData, db: Session = Depends(get_db)):
+    # ... your existing agent_executor logic ...
+    
+    # NEW: Save the result to your database
+    new_record = schema_db.GeneratedSchema(
+        user_prompt=data.prompt,
+        schema_json=result["schema"]
+    )
+    db.add(new_record)
+    db.commit()
+    
+    return result
 
 # --- PATH GUARD: Add backend root to Python path ---
 current_dir = os.path.dirname(os.path.abspath(__file__))
